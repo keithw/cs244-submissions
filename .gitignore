@@ -19,3 +19,6 @@ Makefile.in
 /compile
 /datagrump/sender
 /datagrump/receiver
+.project
+.cproject
+.settings/
