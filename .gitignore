@@ -18,4 +18,5 @@ Makefile.in
 /examples/tcpserver
 /compile
 /datagrump/sender
+.git_nodelete
 /datagrump/receiver
