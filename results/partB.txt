@@ -1,0 +1,5 @@
+Simple AIMD:
+
+We incremented the cwnd by 1/cwnd on each ack, and added a function that 
+informs the controller when a timeout occured, decrementing cwnd by 
+0.5 * cwnd. The initial cwnd size was 1.
