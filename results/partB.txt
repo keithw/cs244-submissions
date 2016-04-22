@@ -1,5 +1,21 @@
 Simple AIMD:
 
 We incremented the cwnd by 1/cwnd on each ack, and added a function that 
-informs the controller when a timeout occured, decrementing cwnd by 
-0.5 * cwnd. The initial cwnd size was 1.
+informs the controller when a timeout occured, setting cwnd to k * cwnd, where
+c < 1. The initial cwnd size was 1.
+
+We tested many different values of c, but even setting cwnd to 1 after each
+timeout, but had poor results since the buffer size is unbounded.
+
+In an attempt to improve performance, we tested adding an upper bound on the
+cwnd, never allowing it to increase past 20, and setting the cwnd to 1 whenever
+we would normally increment past 20 (emulating a sawtooth-AIMD type behavior).
+
+We additionally tried tweaking the timeout value from the initial value of
+1000ms. By setting the timeout to 50ms, we observed a power score of 16, our
+best so far (with no upper bound on cwnd.)
+
+AIMD is not performing very well, failing to get a power score above about 12.
+We suspect this is because the 
+
+
