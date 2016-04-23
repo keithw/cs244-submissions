@@ -164,7 +164,6 @@ void UDPSocket::send( const string & payload )
 				0 ) );
 
   register_write();
-
   if ( size_t( bytes_sent ) != payload.size() ) {
     throw runtime_error( "datagram payload too big for send()" );
   }
