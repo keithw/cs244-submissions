@@ -35,3 +35,10 @@ Part C (loss based, targeting 200 ms):
     95th percentile per-packet queueing delay: 117 ms
     95th percentile signal delay: 190 ms
 
+Contest Alexander (AIAD):
+
+    Average capacity: 5.04 Mbits/s
+    Average throughput: 4.09 Mbits/s (81.2% utilization)
+    95th percentile per-packet queueing delay: 66 ms
+    95th percentile signal delay: 117 ms
+
