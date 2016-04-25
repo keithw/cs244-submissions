@@ -7,5 +7,5 @@
 /* Current time in milliseconds since the start of the program */
 uint64_t timestamp_ms( void );
 uint64_t timestamp_ms( const timespec & ts );
-
+uint64_t timestamp_ms_raw( const timespec & ts );
 #endif /* TIMESTAMP_HH */

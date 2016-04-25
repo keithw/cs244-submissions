@@ -17,7 +17,7 @@ static timespec current_time( void )
   return ret;
 }
 
-static uint64_t timestamp_ms_raw( const timespec & ts )
+uint64_t timestamp_ms_raw( const timespec & ts )
 {
   const uint64_t nanos = ts.tv_sec * BILLION + ts.tv_nsec;
   return nanos / MILLION;
