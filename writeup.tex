@@ -39,7 +39,13 @@ sunetids: gusliu, ejberg
 	
 	
 \section*{Warmup exercise B}
-	
+AIMD performed well in terms of throughput but poorly for delay. We chose the following constants:\\
+Timeout = 80ms, 
+SSThresh = 13, 
+Multiplicative decrease factor = 2.\\
+Our best score was $\frac{3.81}{0.295} = 12.92$. \\
+
+This makes sense because AIMD waits for a "timeout" to occur before cutting the window. Moreover, the multiplicative decrease gives us less granularity in our control over the window. 
 	
 \section*{Warmup exercise C}
 	This delay-triggered scheme doesn't work very well. Below are our various results from runs.
