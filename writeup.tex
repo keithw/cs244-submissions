@@ -36,8 +36,18 @@ sunetids: gusliu, ejberg
 \end{center}
 
 \section*{Warmup exercise A}
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{chart.png}
+\end{figure}
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{plot.png}
+\end{figure}
+
+Generally as we increase a constant CWND, throughput and signal delay both increase. The variance for multiple runs with the same CWND (shown here at CWND = 75) is relatively low, even on the VirtualBox VM. We determined that the optimal value for a constant CWND is probably between 12 and 15.
 	
 	
+	\pagebreak[4]
 \section*{Warmup exercise B}
 	
 	
@@ -54,7 +64,9 @@ Exponential increase, exponential decrease, thresh =  85: $\frac{2.58}{0.229}$ =
 Exponential increase and decrease with a threshold of 85ms worked the best. We believe this is because it allows the window to more rapidly adjust to changing network conditions compared to linear adjustments. Also, a threshold too low doesn't optimize for throughput, while a threshold too high adjusts too late. 
 
 \section*{Warmup exercise D}
-
+Our final algorithm combines AIMD and RTT thresholding with a method for linearly decreasing CWND as the queue builds. \\ 
+\\
+The AIMD portion of the algorithm contains a slow start phase, for aggressive recovery from stretches of very low throughput, and a linear increase phase once CWND has passed a predefined threshold. This threshold we set at our optimal constant CWND result from warmup A. Rather than triggering our multiplicative decrease on packet timeout, we use an RTT threshold to trigger it. When the RTT climbs above some threshold, CWND is decreased by a constant factor. We found 2.25 to be optimal in testing. To ensure we do not repeatedly cut the window, the RTT is tracked as a weighted moving average and we only cut the window when the previous value of the RTT average was below the threshold and the new value is above the threshold. To make this scheme play nice with slow start, where we may have very low throughput and we do not want to increase the window again while the queue is draining, if CWND is below the slow start threshold and the RTT average is below the RTT threshold, we 
 	
 		
 \end{document}
