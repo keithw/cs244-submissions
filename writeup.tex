@@ -1,0 +1,64 @@
+\documentclass[12pt]{article}
+
+%\usepackage[dvips]{graphics,color}
+\usepackage{fullpage}
+%\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+%\usepackage{latexsym}
+\usepackage{enumerate}
+\usepackage{fancybox}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{gensymb}
+\usepackage{units}
+\usepackage{ifthen}
+\usetikzlibrary{calc}
+\usetikzlibrary{automata,positioning}
+\pagenumbering{gobble}
+
+\usepackage{graphicx}
+\graphicspath{{./}}
+\usepackage{wrapfig}
+\DeclareGraphicsExtensions{.png,.jpg}
+
+\setlength{\parskip}{1pc}
+\setlength{\topmargin}{-1pc}
+\setlength{\textheight}{9in}
+
+\begin{document}
+\begin{center}
+{\Large CS244 PA2 Writeup}
+\begin{center}
+Gus Liu, Eli Berg - Spring 2016 \\
+sunetids: gusliu, ejberg
+\end{center} 
+\end{center}
+
+\section*{Warmup exercise A}
+	
+	
+\section*{Warmup exercise B}
+	
+	
+\section*{Warmup exercise C}
+	This delay-triggered scheme doesn't work very well. Below are our various results from runs.
+\\
+\\
+Linear increase, exponential decrease, thresh = 75: $\frac{1.55}{0.205}$ = 7.56 \\
+Linear increase, linear decrease, thresh =  75: $\frac{2.46}{0.479}$ = 5.14 \\
+Exponential increase, exponential decrease, thresh =  75: $\frac{2.46}{0.220}$ = 11.18 \\
+Exponential increase, exponential decrease, thresh =  100: $\frac{2.90}{0.289}$ = 10.03 \\
+Exponential increase, exponential decrease, thresh =  85: $\frac{2.58}{0.229}$ = 11.26 \\
+\\
+Exponential increase and decrease with a threshold of 85ms worked the best. We believe this is because it allows the window to more rapidly adjust to changing network conditions compared to linear adjustments. Also, a threshold too low doesn't optimize for throughput, while a threshold too high adjusts too late. 
+
+\section*{Warmup exercise D}
+
+	
+		
+\end{document}
+
+
+
+
