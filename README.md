@@ -1,7 +1,8 @@
-Sourdough: example classes for network programming
+EACC
 
-To build:
+Andrew Fang
+Emre Orbay
 
-	$ ./autogen.sh
-	$ ./configure
-	$ make
+Best score: 33.20
+throughput: 67.8%
+delay: 103 ms
