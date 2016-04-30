@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#define NUM_DELTAS 10
+
 /* Congestion controller interface */
 
 class Controller
@@ -11,8 +13,11 @@ private:
   bool debug_; /* Enables debugging output */
   float cwnd;
   float rtt_avg;
-  float slow_st_thresh;
-
+  int rtt_gain;
+  uint64_t curr_timeslice;
+  float num_packets_in_timeslice;
+  int up_count;
+  float update_avg(float new_val);
 
   /* Add member variables here */
 

@@ -3,19 +3,24 @@
 #include "controller.hh"
 #include "timestamp.hh"
 
-#define RTT_GUESS 100
-#define CWND_DEFAULT 15
-#define TIMEOUT 500
-#define RTT_THRESH 125
-#define SLOW_ST_THRESH 15
-
+#define RTT_GUESS 70
+#define CWND_DEFAULT 30
+#define CWND_MIN 1
+#define TIMEOUT 60
+#define RTT_THRESH 110
+#define SLOW_ST_THRESH 13
+#define RTT_WEIGHT 1.25
+#define RTT_GAIN_FACTOR 0.005
+#define MULT_DECREASE_FACTOR 2.25
+#define TIME_SLICE 10
 using namespace std;
 
 /* Default constructor */
 Controller::Controller( const bool debug )
-  : debug_( debug ), cwnd(CWND_DEFAULT), rtt_avg(RTT_GUESS), 
-    slow_st_thresh(SLOW_ST_THRESH)
-{}
+  : debug_( debug ), cwnd(CWND_DEFAULT), rtt_avg(RTT_GUESS), rtt_gain(0),
+    curr_timeslice(), num_packets_in_timeslice(), up_count(0)
+{
+}
 
 /* Get current window size, in datagrams */
 unsigned int Controller::window_size( void )
@@ -44,6 +49,7 @@ void Controller::datagram_was_sent( const uint64_t sequence_number,
   }
 }
 
+
 /* An ack was received */
 void Controller::ack_received( const uint64_t sequence_number_acked,
 			       /* what sequence number was acknowledged */
@@ -54,22 +60,42 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 			       const uint64_t timestamp_ack_received )
                                /* when the ack was received (by sender) */
 {
-  /* Default: take no action */
-  if (cwnd < slow_st_thresh) {
-    cwnd += 1;
-  } else {
-    cwnd += 1/cwnd;
-  }
+
   unsigned int curr_rtt = (timestamp_ack_received - recv_timestamp_acked) +
       (recv_timestamp_acked - send_timestamp_acked);
   float old_avg = rtt_avg;
-  float curr_weight = 1/cwnd;
+  float curr_weight = RTT_WEIGHT/cwnd;
   rtt_avg = curr_weight * curr_rtt + (1 - curr_weight) * rtt_avg;
-  if (rtt_avg > old_avg && old_avg < RTT_THRESH) {
-    if (rtt_avg > RTT_THRESH) {
-        cwnd /= 2; 
-    }
+  if (num_packets_in_timeslice != 0 && curr_timeslice < timestamp_ack_received/TIME_SLICE) {
+    if (rtt_gain < 0) {
+      //cerr << "cwnd RTT Gain Factor" << (1.0 + (rtt_gain/num_packets_in_timeslice) * RTT_GAIN_FACTOR) << endl;
+      cwnd *= (1.0 + (rtt_gain/num_packets_in_timeslice) * RTT_GAIN_FACTOR);
+    } 
+    rtt_gain = 0;
+    num_packets_in_timeslice = 0;
   }
+  curr_timeslice = timestamp_ack_received/TIME_SLICE;
+  num_packets_in_timeslice++;  
+  if (rtt_avg > old_avg) {
+    rtt_gain--;
+  } else if (rtt_avg <= old_avg) {
+    rtt_gain++;
+  }
+  //cwnd *= (1.0 + (rtt_gain/cwnd) * RTT_GAIN_FACTOR);
+
+  if (rtt_avg > RTT_THRESH && cwnd <= SLOW_ST_THRESH) {
+      cwnd = CWND_MIN;
+  } else if (rtt_avg > old_avg && old_avg < RTT_THRESH) {
+      if (rtt_avg > RTT_THRESH) {
+          cwnd /= MULT_DECREASE_FACTOR;
+      }
+  }/* else if (cwnd < SLOW_ST_THRESH) {
+    cwnd += 1;
+  }*/ else {
+    cwnd += 1/cwnd;
+  }
+   
+  if (cwnd < CWND_MIN) cwnd = CWND_MIN;
 
   if ( debug_ ) {
     cerr << "At time " << timestamp_ack_received
