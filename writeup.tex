@@ -11,6 +11,7 @@
 \usepackage{float}
 \usepackage{tikz}
 \usepackage{gensymb}
+\usepackage[hidelinks]{hyperref}
 \usepackage{units}
 \usepackage{ifthen}
 \usetikzlibrary{calc}
@@ -28,10 +29,15 @@
 
 \begin{document}
 \begin{center}
-{\Large CS244 PA2 Writeup}
+{\Large CS244 PA2 Writeup\\}
+-\\
+{\Large NetBrutality}
 \begin{center}
 Gus Liu, Eli Berg - Spring 2016 \\
-sunetids: gusliu, ejberg
+sunetids: gusliu, ejberg \\ 
+\hspace{1cm}\\ 
+Code found at: \\
+\href{https://github.com/ejdb00/netbrutality}{\textcolor{blue}{\underline{https://github.com/ejdb00/netbrutality}}}
 \end{center} 
 \end{center}
 
@@ -44,7 +50,7 @@ sunetids: gusliu, ejberg
   \includegraphics[width=\linewidth]{plot.png}
 \end{figure}
 
-Generally as we increase a constant CWND, throughput and signal delay both increase. The variance for multiple runs with the same CWND (shown here at CWND = 75) is relatively low, even on the VirtualBox VM. We determined that the optimal value for a constant CWND is probably between 12 and 15.
+Generally as we increase a constant CWND, throughput and signal delay both increase. The variance for multiple runs with the same CWND (shown here at CWND = 75) is relatively low, even on the VirtualBox VM. We determined that the optimal value for a constant CWND is between 12 and 15.
 	
 	
 	\pagebreak[4]
@@ -69,11 +75,45 @@ Exponential increase, exponential decrease, thresh =  85: $\frac{2.58}{0.229}$ =
 \\
 Exponential increase and decrease with a threshold of 85ms worked the best. We believe this is because it allows the window to more rapidly adjust to changing network conditions compared to linear adjustments. Also, a threshold too low doesn't optimize for throughput, while a threshold too high adjusts too late. 
 
-\section*{Warmup exercise D}
-Our final algorithm combines AIMD and RTT thresholding with a method for linearly decreasing CWND as the queue builds. \\ 
+\section*{Exercise D: The Contest Algorithm}
+Our final algorithm, NetBrutality, combines AIMD and RTT thresholding with a method for linearly decreasing CWND as RTT increases over time. \\ 
 \\
-The AIMD portion of the algorithm contains a slow start phase, for aggressive recovery from stretches of very low throughput, and a linear increase phase once CWND has passed a predefined threshold. This threshold we set at our optimal constant CWND result from warmup A. Rather than triggering our multiplicative decrease on packet timeout, we use an RTT threshold to trigger it. When the RTT climbs above some threshold, CWND is decreased by a constant factor. We found 2.25 to be optimal in testing. To ensure we do not repeatedly cut the window, the RTT is tracked as a weighted moving average and we only cut the window when the previous value of the RTT average was below the threshold and the new value is above the threshold. To make this scheme play nice with slow start, where we may have very low throughput and we do not want to increase the window again while the queue is draining, if CWND is below the slow start threshold and the RTT average is below the RTT threshold, we 
-	
+The AIMD portion of the algorithm originally contained a slow start phase, for aggressive recovery from stretches of very low throughput, and a linear increase phase once CWND has passed a predefined threshold. This threshold we set at our optimal constant CWND result from warmup A. Rather than triggering our multiplicative decrease on packet timeout, we use an RTT threshold to trigger it. When the RTT climbs above some threshold, CWND is decreased by a constant factor. We found 2.25 to be optimal in testing. To ensure we do not repeatedly cut the window, the RTT is tracked as a weighted moving average and we only cut the window when the previous value of the RTT average was below the threshold and the new value is above the threshold. We chose the threshold to be 110ms by testing several values experimentally.\\
+\\
+The RTT average is updated upon receipt of each ACK. Since RTT is only tracked to judge whether it has surpassed some threshold and to track whether it is increasing or decreasing in the short term, the average can be updated very quickly to maintain a more accurate picture of recent RTT.\\
+\\
+To make this scheme play nice with slow start, where we may have very low throughput and we do not want to increase the window again while the queue is draining, if CWND was below the slow start threshold and the RTT average is below the RTT threshold, we kept the CWND to a minimum value until the RTT average again climbed above the threshold.\\
+\\
+This algorithm was quite aggressive and achieved very high throughput at the cost of increased delay because it was unable to slow the growth of CWND quickly enough. CWND grew very quickly while capacity was increasing but could not predict falling capacity before a very sizable queue had already accumulated. In light of this, we did away with the slow start portion of the algorithm in favor of a strictly linear increase during CWND growth. The resulting algorithm was able to more effectively decrease CWND when RTT increased past the threshold before the queue grew too large. The mechanism for keeping CWND to a minimum while it was below the original slow start threshold and RTT was above the RTT threshold was kept as it proved effective for recovery from low capacity periods even after the removal of slow start.\\
+\\
+To give the algorithm some finer measurement of increasing delay, we implemented a time sliced method for measuring whether RTT was rising or falling within a given time frame. During a time slice, each received ACK is counted, and we decrement or increment a gain counter based on whether the RTT average increased or decreased with the addition of that ACK's measured RTT. At the end of a time slice, if the gain counter is negative because RTT increased for more ACKs than it decreased within the time slice, we scale back CWND proportionally to the value of the gain counter. The equation to update CWND after a time slice is:\\
+\\
+$cwnd = cwnd (1 + \frac{gain\_counter}{num\_acks\_received}) * RTT\_GAIN\_FACTOR$\\
+\\
+where $RTT\_GAIN\_FACTOR$ was set to 0.005 as determined by testing. The result is that, if RTT increased for every received ACK in the time slice, CWND is multiplied by a factor of 0.995 at the end of the time slice. If RTT increased for only most of the ACKs, the factor is somewhere between 0.995 and 1, and the factor is bounded by 1 (no change to CWND) if the RTT decreased during at least half of that time slice. The addition of this time-sliced linear scaling mechanism was able to temper the aggressive growth of CWND during periods of increasing capacity and detect falling capacity sooner. The result was much lower delay at the cost of slightly less throughput during the less aggressive growth stage.\\
+\\
+Our general method of discovery for optimal values of constants was a manual (quasi) binary search, varying only a single constant at a time, and testing high and low values with decreasing intervals as we converged on the optimal range. This process was not as well documented (plotted) as we would have perhaps liked. This was generally because up until the last day we spent more time iterating on algorithmic properties and less on knob-twiddling. With only a single network trace, excessive knob-twiddling to find perfectly optimal constants is an inefficient use of time as it can lead to overfitting a dataset and decreased average performance across other network traces. \\
+\\
+Figures 1 and 2 below illustrate how the less aggressive growth scheme and RTT adjusted decrease mechanism allow the algorithm to more accurately track falling capacity and recover more quickly using finer adjustments of CWND. Note that the more gradual growth of the send rate in figure 2 loses some potential throughput during periods of growth, but rarely collides with a capacity ceiling before beginning to decrease again. The send rate also does not need to fall as far to let the queue drain after overfilling it.\\
+\\
+Figure 3 demonstrates the effect on output statistics that changing various aspects of the algorithm had. The tests were performed on a local VirtualBox VM rather than on EC2 like the main runs so there is more variance in the data. The recorded per-packet delay is slightly more accurate as it ignores some machine-load-influenced delay caused by packet processing in the simulated hosts.
+
+
+\begin{figure}[h!]
+  \includegraphics[scale=1]{Fig1.png}
+  \caption{Algorithm performance with slow start and no scaling decrease}
+\end{figure}
+
+\begin{figure}[h!]
+  \includegraphics[scale=1]{Fig2.png}
+  \caption{Final algorithm performance}
+\end{figure}
+
+\begin{figure}[h!]
+  \includegraphics[scale=.75]{Fig3.png}
+  \caption{Performance of different algorithmic modifications on local VM}
+\end{figure}
+
 		
 \end{document}
 
