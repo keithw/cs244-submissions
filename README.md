@@ -1,4 +1,6 @@
-Sourdough: example classes for network programming
+DALIDA: Delay-based Additive Linear Increase/Decrease Algorithm
+
+Trey Deitch and Alexander Schaub
 
 To build:
 
@@ -10,7 +12,7 @@ To run:
 
     $ cd datagrump
     $ sudo sysctl -w net.ipv4.ip_forward=1
-    $ ./run-contest axschaubtdeitch
+    $ ./run-contest DALIDA
 
 Results:
 
